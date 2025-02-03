@@ -78,6 +78,6 @@ MQTT-SN es una versión más liviana de MQTT, diseñada específicamente para re
 
 ## Documentación Detallada
 
-Para más detalles sobre el proceso de implementación, consulta la documentación completa [aquí](https://www.hackster.io/527576/sistema-de-monitoreo-ambiental-con-sensor-dht11-esp32-042fad?auth_token=95395441f291313b32ccad79eaf4570f).
+Para más detalles sobre el proceso de implementación, consulta la documentación completa [aquí]().
 
 ---
