@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IoT - Grupo 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Poppins:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard IoT</h1>
+            <p class="subtitle">Monitoreo en Tiempo Real - Grupo 3</p>
+        </header>
+
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#date-picker-section">Selección de Fechas</a></li>
+                <li><a href="#node-filter-section">Filtrar Nodos</a></li>
+                <li><a href="#dht11-section">DHT11</a></li>
+                <li><a href="#hw080-section">HW080</a></li>
+                <li><a href="#stress-map-section">Estado de Estrés Hídrico</a></li>
+                <li><a href="#actuator-control-section">Control de Actuador</a></li>
+                <li><a href="#latest-data-section">Últimos Datos</a></li>
+            </ul>
+        </nav>
+
+        <section id="date-picker-section">
+            <h2 class="section-title">Selección de Fechas</h2>
+            <div id="date-picker-container" class="date-picker">
+                <input type="text" id="date-range" placeholder="Seleccionar rango de fechas">
+                <button id="update-btn">Actualizar</button>
+            </div>
+            <div class="controls">
+                <label class="switch">
+                    <input type="checkbox" id="show-last-n">
+                    <span class="slider round"></span>
+                </label>
+                <span class="control-label">Modo en tiempo real</span>
+                <input type="number" id="n-values" min="1" value="10" class="control-input">
+                <span class="control-label">valores</span>
+            </div>
+        </section>
+
+        <section id="node-filter-section">
+            <h2 class="section-title">Filtrar Nodos</h2>
+            <div id="node-filter" class="node-filter">
+                <!-- Node filter checkboxes will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <section id="dht11-section" class="chart-section">
+            <h2 class="section-title">DHT11 - Temperatura y Humedad</h2>
+            <div id="dht11-charts" class="grid dht11-grid">
+                <!-- DHT11 charts will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <section id="hw080-section" class="chart-section">
+            <h2 class="section-title">HW080 - Humedad del Suelo</h2>
+            <div id="hw080-charts" class="grid hw080-grid">
+                <!-- HW080 charts will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <section id="stress-map-section" class="chart-section card">
+            <h2 class="section-title">Estado de Estrés Hídrico</h2>
+            <div class="stress-map-container">
+                <div class="stress-chart">
+                    <div id="stress-chart" class="chart-container">
+                        <canvas id="stress-pie-chart"></canvas>
+                    </div>
+                </div>
+                <div class="node-map-container">
+                    <div id="node-map" class="node-map">
+                        <div class="node" id="node-1" data-node="1"></div>
+                        <div class="node" id="node-2" data-node="2"></div>
+                        <div class="node" id="node-3" data-node="3"></div>
+                        <div class="node" id="node-4" data-node="4"></div>
+                        <div class="router" id="border-router" title="Router de Borde"></div>
+                    </div>
+                </div>
+                <div class="node-info">
+                    <h3>Información de Nodos</h3>
+                    <button id="toggle-node-info" class="toggle-button">Mostrar Información de Nodos</button>
+                    <div id="node-info-table" class="node-info-table hidden">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nodo</th>
+                                    <th>Nombre</th>
+                                    <th>Nivel de Estrés</th>
+                                    <th>MAC</th>
+                                    <th>IPv6</th>
+                                </tr>
+                            </thead>
+                            <tbody id="node-info-body">
+                                <!-- Node information will be dynamically inserted here -->
+                            </tbody>
+                            <tfoot>
+                                <tr id="router-info">
+                                    <td>Router</td>
+                                    <td>Pablo Nastacuaz</td>
+                                    <td>N/A</td>
+                                    <td>6E:07:A3:82:E3:72</td>
+                                    <td>2001:db8:a::2</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="actuator-control-section" class="card">
+            <h2 class="section-title">Control de Actuador</h2>
+            <div class="actuator-controls">
+                <div class="actuator-switch">
+                    <label class="switch">
+                        <input type="checkbox" id="actuator-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span id="actuator-status">Apagado</span>
+                </div>
+                <button id="toggle-schedule" class="toggle-button">Mostrar Programación</button>
+            </div>
+            <div id="actuator-schedule" class="actuator-schedule hidden">
+                <h3>Programar Actuador</h3>
+                <div class="actuator-inputs">
+                    <div class="input-group">
+                        <label for="actuator-on-time">Hora de encendido:</label>
+                        <input type="time" id="actuator-on-time">
+                    </div>
+                    <div class="input-group">
+                        <label for="actuator-off-time">Hora de apagado:</label>
+                        <input type="time" id="actuator-off-time">
+                    </div>
+                </div>
+                <div class="actuator-days">
+                    <label><input type="checkbox" value="1"> Lun</label>
+                    <label><input type="checkbox" value="2"> Mar</label>
+                    <label><input type="checkbox" value="3"> Mié</label>
+                    <label><input type="checkbox" value="4"> Jue</label>
+                    <label><input type="checkbox" value="5"> Vie</label>
+                    <label><input type="checkbox" value="6"> Sáb</label>
+                    <label><input type="checkbox" value="0"> Dom</label>
+                </div>
+                <button id="set-actuator" class="actuator-btn">Programar Actuador</button>
+                <div id="actuator-list"></div>
+            </div>
+        </section>
+
+        <section id="latest-data-section" class="card">
+            <h2 class="section-title">Últimos Datos Recibidos</h2>
+            <ul id="data-list"></ul>
+        </section>
+
+        <footer>
+            <h3>Créditos</h3>
+            <ul class="credits-list">
+                <li>Ariel Gonzales</li>
+                <li>Anthony Ibujes</li>
+                <li>Jordan Manguay</li>
+                <li>Pablo Nastacuaz</li>
+                <li>Cristopher Ruales</li>
+            </ul>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
+
